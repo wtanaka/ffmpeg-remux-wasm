@@ -5,6 +5,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: build
+      include: scope
   # The versions of the actions in the workflows and in the shared actions.
   - package-ecosystem: github-actions
     directories:
@@ -14,3 +17,6 @@ updates:
       - /.github/actions/cache-target
     schedule:
       interval: weekly
+    commit-message:
+      prefix: ci
+      include: scope

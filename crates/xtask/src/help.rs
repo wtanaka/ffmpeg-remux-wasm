@@ -43,7 +43,9 @@ fn about(name: &str) -> String {
         ),
         "ci" => {
             "Everything CI checks, so you can run it yourself. `lint`: fmt \
-                 --check,\nshellcheck and clippy. `build`: the tests, `wasm` \
+                 --check,\nshellcheck, clippy, the release notes' \
+                 configuration and the commit\nmessages since the last \
+                 release (Conventional Commits, 80 columns). `build`: the tests, `wasm` \
                  and `package`.\nDefault: both. The workflows call this."
                 .to_string()
         }
@@ -85,9 +87,12 @@ fn about(name: &str) -> String {
             paths::SUMS_NAME
         ),
         "publish-release" => format!(
-            "Publishes {dist}/ as the GitHub release for the tag. Safe to run\n\
-             again: the release is created once and its files are replaced.\n\
-             Needs the gh CLI. The release workflow runs this."
+            "Publishes {dist}/ as the GitHub release for the tag. The notes are\n\
+             written from the commits since the previous tag with git-cliff\n\
+             (Conventional Commits), then a line about the build. Safe to run\n\
+             again: the release is created once, and its notes and files are\n\
+             replaced. Needs the gh CLI and git-cliff; the tag and the history\n\
+             must be in the checkout. The release workflow runs this."
         ),
         "package" => format!(
             "Zips the project's files for uploading somewhere that takes a \

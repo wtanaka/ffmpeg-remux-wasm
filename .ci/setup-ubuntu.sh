@@ -2,7 +2,8 @@
 # Sets up a bare Ubuntu or Debian machine (a CI runner, a cloud shell, a fresh
 # container) to build and format this repository: system packages, Rust, the
 # Emscripten SDK (ffmpeg/EMSCRIPTEN_VERSION), dprint (.ci/DPRINT_VERSION)
-# and shfmt (.ci/SHFMT_VERSION, checksums in .ci/shfmt.sha256).
+# shfmt (.ci/SHFMT_VERSION, checksums in .ci/shfmt.sha256), git-cliff and
+# committed (.ci/GIT_CLIFF_VERSION, .ci/COMMITTED_VERSION).
 #
 #   sh .ci/setup-ubuntu.sh
 #
@@ -19,7 +20,7 @@
 # change a version or SETUP_REV, to install again.
 set -eu
 
-SETUP_REV=2 # bump when this script changes what it installs
+SETUP_REV=4 # bump when this script changes what it installs
 case $0 in
   */*) HERE=${0%/*} ;;
   *) HERE=. ;;
@@ -31,7 +32,9 @@ STAMP=${XDG_CACHE_HOME:-$HOME/.cache}/ffmpeg-remux-wasm/setup-stamp
 read -r EMSCRIPTEN_VERSION < "$HERE/../ffmpeg/EMSCRIPTEN_VERSION"
 read -r DPRINT_VERSION < "$HERE/DPRINT_VERSION"
 read -r SHFMT_VERSION < "$HERE/SHFMT_VERSION"
-WANT="rev=$SETUP_REV emscripten=$EMSCRIPTEN_VERSION dprint=$DPRINT_VERSION shfmt=$SHFMT_VERSION emsdk=$EMSDK_DIR"
+read -r GIT_CLIFF_VERSION < "$HERE/GIT_CLIFF_VERSION"
+read -r COMMITTED_VERSION < "$HERE/COMMITTED_VERSION"
+WANT="rev=$SETUP_REV emscripten=$EMSCRIPTEN_VERSION dprint=$DPRINT_VERSION shfmt=$SHFMT_VERSION git-cliff=$GIT_CLIFF_VERSION committed=$COMMITTED_VERSION emsdk=$EMSDK_DIR"
 HAVE=
 [ -f "$STAMP" ] && read -r HAVE < "$STAMP"
 if [ "$HAVE" = "$WANT" ]; then
@@ -78,7 +81,7 @@ fi
 "$EMSDK_DIR/emsdk" install "$EMSCRIPTEN_VERSION"
 "$EMSDK_DIR/emsdk" activate "$EMSCRIPTEN_VERSION"
 
-# Both tools are downloaded as prebuilt binaries, not compiled.
+# The tools are downloaded as prebuilt binaries, not compiled.
 echo "==> dprint $DPRINT_VERSION"
 if ! command -v cargo-binstall > /dev/null; then
   curl -L --proto '=https' --tlsv1.2 -sSf \
@@ -86,6 +89,10 @@ if ! command -v cargo-binstall > /dev/null; then
     | bash
 fi
 cargo binstall --no-confirm "dprint@$DPRINT_VERSION"
+
+echo "==> git-cliff $GIT_CLIFF_VERSION and committed $COMMITTED_VERSION"
+cargo binstall --no-confirm "git-cliff@$GIT_CLIFF_VERSION" \
+  "committed@$COMMITTED_VERSION"
 
 echo "==> shfmt $SHFMT_VERSION"
 case $(uname -m) in

@@ -5,8 +5,7 @@
 //! .ci/DPRINT_VERSION (which .ci/setup-ubuntu.sh reads too). A missing or
 //! different dprint (or shfmt) is an error that says how to install it.
 
-use crate::process::{self, Env};
-use crate::{io, paths, Result};
+use crate::{io, paths, process, tools, Result};
 
 /// Space after redirects, indented case arms and operators that start a
 /// wrapped line: the style the shell scripts are already in.
@@ -61,52 +60,9 @@ pub fn shell_scripts() -> Result<Vec<String>> {
     Ok(scripts_in(&listings))
 }
 
-/// Whether what the program printed for `--version` is the pinned version.
-fn is_pinned(printed: Option<&str>, expected: &str) -> bool {
-    printed == Some(expected)
-}
-
-fn dprint_message(version: &str, printed: Option<&str>) -> String {
-    format!(
-        "dprint {version} is required ({}). Install it with one of:\n  \
-         cargo binstall dprint@{version}   (a prebuilt download; needs \
-         cargo-binstall)\n  \
-         cargo install --locked dprint --version {version}   (compiles it)\n  \
-         sh {setup}   (a bare Ubuntu machine: installs everything)\n\
-         The version is pinned in {pin}.",
-        printed.unwrap_or("dprint is not installed"),
-        setup = paths::SETUP_SCRIPT,
-        pin = paths::DPRINT_VERSION_FILE,
-    )
-}
-
-fn shfmt_message(version: &str, printed: Option<&str>) -> String {
-    format!(
-        "shfmt v{version} is required ({}). Install it with one of:\n  \
-         brew install shfmt   (macOS; may be a different version)\n  \
-         sh {setup}   (a bare Ubuntu machine: downloads v{version} and \
-         checks it against {sums})\n  \
-         a release binary from https://github.com/mvdan/sh/releases\n\
-         The version is pinned in {pin}.",
-        printed.unwrap_or("shfmt is not installed"),
-        setup = paths::SETUP_SCRIPT,
-        sums = paths::SHFMT_SHA256_FILE,
-        pin = paths::SHFMT_VERSION_FILE,
-    )
-}
-
 pub fn run(check: bool) -> Result {
-    let none = Env::new();
-    let dprint = process::version_of("dprint", &none);
-    let dprint_version = paths::DPRINT_VERSION.trim();
-    if !is_pinned(dprint.as_deref(), &format!("dprint {dprint_version}")) {
-        return Err(dprint_message(dprint_version, dprint.as_deref()).into());
-    }
-    let shfmt = process::version_of("shfmt", &none);
-    let shfmt_version = paths::SHFMT_VERSION.trim();
-    if !is_pinned(shfmt.as_deref(), &format!("v{shfmt_version}")) {
-        return Err(shfmt_message(shfmt_version, shfmt.as_deref()).into());
-    }
+    tools::ensure(&tools::dprint())?;
+    tools::ensure(&tools::shfmt())?;
     for (program, args) in commands(check, &shell_scripts()?) {
         process::run(program, &args)?;
     }
@@ -138,22 +94,5 @@ mod tests {
             ("a", vec!["y.sh".to_string()]),
         ];
         assert_eq!(scripts_in(&listings), ["a/y.sh", "b/x.sh"]);
-    }
-
-    #[test]
-    fn only_the_pinned_version_passes() {
-        assert!(is_pinned(Some("dprint 0.63.0"), "dprint 0.63.0"));
-        assert!(!is_pinned(Some("dprint 0.62.0"), "dprint 0.63.0"));
-        assert!(!is_pinned(None, "dprint 0.63.0"));
-    }
-
-    #[test]
-    fn the_messages_say_what_is_wrong_and_how_to_fix_it() {
-        let message = dprint_message("0.63.0", None);
-        assert!(message.contains("dprint is not installed"));
-        assert!(message.contains("cargo binstall dprint@0.63.0"));
-        let message = shfmt_message("3.14.1", Some("v3.0.0"));
-        assert!(message.contains("(v3.0.0)"));
-        assert!(message.contains(paths::SHFMT_SHA256_FILE));
     }
 }

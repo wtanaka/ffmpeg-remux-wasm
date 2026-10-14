@@ -1,0 +1,52 @@
+# committed checks the commit messages: Conventional Commits, and no line longer
+# than 80 columns (a body is wrapped, like the files are). It is run by
+# `cargo xtask ci lint` on the commits since the last release.
+#
+# The types are those git-cliff (cliff.toml) knows, which also decides what goes
+# in the release notes.
+
+style = "conventional"
+allowed_types = [
+  "feat",
+  "fix",
+  "perf",
+  "docs",
+  "style",
+  "test",
+  "ci",
+  "chore",
+  "refactor",
+  "build",
+]
+
+# The first line is "type(scope): description"; it and every other line fit in
+# 80 columns.
+subject_length = 80
+line_length = 80
+hard_line_length = 80
+
+# More checks. The description of a conventional commit starts in lower case
+# (`fix: report a ...`; the release notes capitalise it).
+subject_capitalized = false
+subject_not_punctuated = true
+imperative_subject = true
+no_fixup = true
+no_wip = true
+
+# Only the scopes the project uses, so that a misspelling (`export`) is caught.
+# exports, ffmpeg and emscripten have their own heading in the release notes.
+allowed_scopes = [
+  "exports",
+  "ffmpeg",
+  "emscripten",
+  "xtask",
+  "release",
+  "ci",
+  "setup",
+  "docs",
+  "deps",
+]
+
+# Dependabot writes its own messages (with the release notes of the update in
+# the body, in long lines).
+ignore_author_re = "^dependabot"

@@ -117,14 +117,33 @@ pub fn output<S: AsRef<str>>(program: &str, args: &[S]) -> Result<Output> {
     output_in(&paths::root(), &Env::new(), program, args)
 }
 
+/// What a finished program printed to standard output, without the final
+/// newline.
+fn stdout_text(output: &Output) -> String {
+    String::from_utf8_lossy(&output.stdout).trim().to_string()
+}
+
+/// What the program printed, without the final newline; an error carrying the
+/// program's own message if it failed.
+pub fn text<S: AsRef<str>>(program: &str, args: &[S]) -> Result<String> {
+    let output = output(program, args)?;
+    if output.status.success() {
+        Ok(stdout_text(&output))
+    } else {
+        Err(format!(
+            "{} failed: {}",
+            describe(program, &args[..args.len().min(2)]),
+            String::from_utf8_lossy(&output.stderr).trim()
+        )
+        .into())
+    }
+}
+
 /// What the program prints for `--version`, if it is installed and works.
 pub fn version_of(program: &str, env: &Env) -> Option<String> {
     let output =
         output_in(&paths::root(), env, program, &["--version"]).ok()?;
-    output
-        .status
-        .success()
-        .then(|| String::from_utf8_lossy(&output.stdout).trim().to_string())
+    output.status.success().then(|| stdout_text(&output))
 }
 
 #[cfg(test)]

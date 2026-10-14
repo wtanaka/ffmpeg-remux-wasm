@@ -1,7 +1,9 @@
 name: Set up the build machine
 description: >
-  Runs .ci/setup-ubuntu.sh (Emscripten, dprint, shfmt), caching what it
-  installs, and puts the tools on the PATH for the steps that follow.
+  Runs .ci/setup-ubuntu.sh (Emscripten, dprint, shfmt, git-cliff,
+  committed),
+  caching what it installs, and puts the tools on the PATH for the steps that
+  follow.
 runs:
   using: composite
   steps:
@@ -15,6 +17,8 @@ runs:
           ~/.cache/ffmpeg-remux-wasm
           ~/.local/bin/shfmt
           ~/.cargo/bin/dprint
+          ~/.cargo/bin/git-cliff
+          ~/.cargo/bin/committed
           ~/.cargo/bin/cargo-binstall
         key: >-
           setup-${{ runner.os }}-${{ hashFiles('.ci/*',

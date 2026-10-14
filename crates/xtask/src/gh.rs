@@ -16,15 +16,5 @@ pub fn run(args: &[String]) -> Result {
 /// What `gh` printed, without the final newline; an error carrying `gh`'s own
 /// message if it failed.
 pub fn text(args: &[String]) -> Result<String> {
-    let output = output(args)?;
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
-    } else {
-        Err(format!(
-            "`gh {}` failed: {}",
-            args.iter().take(2).cloned().collect::<Vec<_>>().join(" "),
-            String::from_utf8_lossy(&output.stderr).trim()
-        )
-        .into())
-    }
+    process::text("gh", args)
 }

@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The commit messages since the last release tag are checked.
+          fetch-depth: 0
       - uses: ./.github/actions/cache-target
       - uses: ./.github/actions/setup
       - run: cargo xtask ci lint

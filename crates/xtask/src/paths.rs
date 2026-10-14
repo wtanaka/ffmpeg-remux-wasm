@@ -13,6 +13,22 @@ macro_rules! ci_dir {
         ".ci"
     };
 }
+/// A file under the CI folder, as a path from the repository root.
+macro_rules! ci_file {
+    ($name:literal) => {
+        concat!(ci_dir!(), "/", $name)
+    };
+}
+/// The contents of a file under the CI folder, read at compile time.
+macro_rules! pinned {
+    ($name:literal) => {
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../",
+            ci_file!($name)
+        ))
+    };
+}
 macro_rules! module_name {
     () => {
         "ffmpeg-remux.wasm"
@@ -43,13 +59,21 @@ pub const MODULE: &str = concat!(ffmpeg_dir!(), "/dist/", module_name!());
 /// The manifest whose `version` is the release version.
 pub const ROOT_MANIFEST: &str = "Cargo.toml";
 /// Sets up a bare Ubuntu machine.
-pub const SETUP_SCRIPT: &str = concat!(ci_dir!(), "/setup-ubuntu.sh");
+pub const SETUP_SCRIPT: &str = ci_file!("setup-ubuntu.sh");
 /// The pinned dprint version.
-pub const DPRINT_VERSION_FILE: &str = concat!(ci_dir!(), "/DPRINT_VERSION");
+pub const DPRINT_VERSION_FILE: &str = ci_file!("DPRINT_VERSION");
 /// The pinned shfmt version.
-pub const SHFMT_VERSION_FILE: &str = concat!(ci_dir!(), "/SHFMT_VERSION");
+pub const SHFMT_VERSION_FILE: &str = ci_file!("SHFMT_VERSION");
+/// The pinned git-cliff version.
+pub const GIT_CLIFF_VERSION_FILE: &str = ci_file!("GIT_CLIFF_VERSION");
+/// The pinned committed version.
+pub const COMMITTED_VERSION_FILE: &str = ci_file!("COMMITTED_VERSION");
+/// committed's configuration: what a commit message must look like.
+pub const COMMITTED_CONFIG: &str = ".github/committed.toml";
+/// git-cliff's configuration: how commits become release notes.
+pub const CLIFF_CONFIG: &str = ".github/cliff.toml";
 /// The pinned SHA-256 of each shfmt release binary.
-pub const SHFMT_SHA256_FILE: &str = concat!(ci_dir!(), "/shfmt.sha256");
+pub const SHFMT_SHA256_FILE: &str = ci_file!("shfmt.sha256");
 
 /// The folders whose `*.sh` files are formatted and checked.
 pub const SHELL_SCRIPT_DIRS: [&str; 1] = [ci_dir!()];
@@ -59,19 +83,11 @@ pub const SHELL_SCRIPT_DIRS: [&str; 1] = [ci_dir!()];
 /// because that directory may be shared with other projects.
 pub const PACKAGE_ZIP: &str = "xtask/ffmpeg-remux-wasm.zip";
 
-// The contents of the pinned files, read at compile time.
-pub const DPRINT_VERSION: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../",
-    ci_dir!(),
-    "/DPRINT_VERSION"
-));
-pub const SHFMT_VERSION: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../",
-    ci_dir!(),
-    "/SHFMT_VERSION"
-));
+// The pinned versions, read at compile time.
+pub const DPRINT_VERSION: &str = pinned!("DPRINT_VERSION");
+pub const SHFMT_VERSION: &str = pinned!("SHFMT_VERSION");
+pub const GIT_CLIFF_VERSION: &str = pinned!("GIT_CLIFF_VERSION");
+pub const COMMITTED_VERSION: &str = pinned!("COMMITTED_VERSION");
 
 /// The repository root.
 pub fn root() -> std::path::PathBuf {

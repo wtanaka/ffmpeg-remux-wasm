@@ -20,7 +20,12 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The release notes are written from the commits since the last tag.
+          fetch-depth: 0
       - uses: ./.github/actions/cache-target
+      # git-cliff, which writes the release notes.
+      - uses: ./.github/actions/setup
       - name: Check the tag matches the release version
         run: cargo xtask check-tag "$GITHUB_REF_NAME"
       - name: Download the build that CI made for this commit

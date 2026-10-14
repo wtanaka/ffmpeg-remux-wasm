@@ -328,20 +328,24 @@ fn attested_files(names: &[String]) -> Vec<String> {
         .collect()
 }
 
+/// A question's answer as a fact: its message if it failed.
+fn fact<T>(answer: Result<T>) -> Fact<T> {
+    answer.map_err(|e| e.to_string())
+}
+
 /// Asks GitHub everything `assess` needs. A question that fails is a fact too
 /// (its message), so that `assess` can report the most important problem.
 fn gather(repo: &str, branch: &str, sha: &str, version: &str) -> Facts {
-    let ask = |a: Vec<String>| gh::text(&a).map_err(|e| e.to_string());
+    let ask = |a: Vec<String>| fact(gh::text(&a));
     let tag = release::tag_for(version);
-    let tag_lookup =
-        gh::output(&lookup_args(repo, &tag)).map_err(|e| e.to_string());
+    let tag_lookup = fact(gh::output(&lookup_args(repo, &tag)));
     Facts {
         sha: sha.to_string(),
         version: version.to_string(),
         on_remote: ask(commit_args(repo, sha)),
         relation: ask(compare_args(repo, branch, sha)),
         remote_manifest: ask(manifest_args(repo, sha)),
-        ci_run: github::ci_run_for(sha).map_err(|e| e.to_string()),
+        ci_run: fact(github::ci_run_for(sha)),
         tag: tag_lookup.and_then(|out| {
             parse_tag_state(
                 out.status.success(),

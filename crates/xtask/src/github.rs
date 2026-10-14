@@ -3,7 +3,7 @@
 //! tagged commit.
 
 use crate::process::args;
-use crate::{checksums, gh, io, paths, Result};
+use crate::{checksums, gh, io, notes, paths, Result};
 
 /// The CI workflow, and the artifact its build job uploads.
 const CI_WORKFLOW: &str = "ci.yml";
@@ -46,8 +46,8 @@ fn download_args(run_id: &str) -> Vec<String> {
     ])
 }
 
-/// The release notes.
-fn release_notes(emscripten: &str) -> String {
+/// The line about the build that ends every release's notes.
+fn build_line(emscripten: &str) -> String {
     format!(
         "{} built from the FFmpeg source in this release, with Emscripten \
          {}. See {}.",
@@ -55,6 +55,22 @@ fn release_notes(emscripten: &str) -> String {
         emscripten.trim(),
         paths::DOC_NAME
     )
+}
+
+/// The release notes: what changed (written from the commits), then the line
+/// about the build.
+fn compose_notes(changes: &str, emscripten: &str) -> String {
+    let changes = changes.trim();
+    if changes.is_empty() {
+        build_line(emscripten)
+    } else {
+        format!("{changes}\n\n{}", build_line(emscripten))
+    }
+}
+
+/// `gh` arguments: replace the notes of the tag's release.
+fn edit_args(tag: &str, notes: &str) -> Vec<String> {
+    args(&["release", "edit", tag, "--notes", notes])
 }
 
 /// `gh` arguments: create the release for the tag.
@@ -124,13 +140,17 @@ pub fn publish_release(tag: &str) -> Result {
     if files.is_empty() {
         return Err(format!("{} is empty", dist.display()).into());
     }
-    if !gh::output(&args(&["release", "view", tag]))?
+    let emscripten =
+        io::read_to_string(&paths::abs(paths::EMSCRIPTEN_VERSION_FILE))?;
+    let notes = compose_notes(&notes::latest()?, &emscripten);
+    // A re-run replaces the notes, so they always match the commits.
+    if gh::output(&args(&["release", "view", tag]))?
         .status
         .success()
     {
-        let emscripten =
-            io::read_to_string(&paths::abs(paths::EMSCRIPTEN_VERSION_FILE))?;
-        gh::run(&create_args(tag, &release_notes(&emscripten)))?;
+        gh::run(&edit_args(tag, &notes))?;
+    } else {
+        gh::run(&create_args(tag, &notes))?;
     }
     gh::run(&upload_args(tag, &files))
 }
@@ -184,9 +204,16 @@ mod tests {
     }
 
     #[test]
-    fn the_notes_name_the_emscripten_version() {
-        let notes = release_notes("4.0.10\n");
-        assert!(notes.contains("Emscripten 4.0.10."), "{notes}");
+    fn the_notes_are_the_changes_then_the_build_line() {
+        let notes = compose_notes("### Added\n- A thing\n", "4.0.10\n");
+        assert!(notes.starts_with("### Added\n- A thing\n\n"), "{notes}");
+        assert!(notes.ends_with("Emscripten 4.0.10. See FFMPEG-BUILD.md."));
+        // Without changes, just the build line.
+        assert_eq!(compose_notes("  \n", "4.0.10"), build_line("4.0.10"));
         assert_eq!(create_args("v1", "n")[2], "v1");
+        assert_eq!(
+            edit_args("v1", "n"),
+            ["release", "edit", "v1", "--notes", "n"]
+        );
     }
 }

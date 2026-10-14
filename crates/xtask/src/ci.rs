@@ -2,7 +2,7 @@
 //! only call this and a contributor can run what CI runs.
 
 use crate::task::CiPart;
-use crate::{fmt, package, process, wasm, Result};
+use crate::{commits, fmt, notes, package, process, wasm, Result};
 
 /// clippy, with every warning an error.
 const CLIPPY: [&str; 6] = [
@@ -24,11 +24,14 @@ fn shellcheck_args(scripts: &[String]) -> Vec<String> {
     args
 }
 
-/// Formatting, shell scripts (shellcheck) and clippy.
+/// Formatting, shell scripts (shellcheck), clippy, the release-notes
+/// configuration and the commit messages since the last release.
 fn lint() -> Result {
     fmt::run(true)?;
     process::run("shellcheck", &shellcheck_args(&fmt::shell_scripts()?))?;
-    process::run("cargo", &CLIPPY)
+    process::run("cargo", &CLIPPY)?;
+    notes::check_config()?;
+    commits::check()
 }
 
 /// The tests, the module, and the project zip.
