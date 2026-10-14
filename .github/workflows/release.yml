@@ -1,0 +1,35 @@
+name: Release
+
+# A release is a pushed tag v<version> (version in the root Cargo.toml). It
+# publishes the files that ci.yml built and checked for the tagged commit; it
+# does not build them again.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  actions: read # to download the CI build
+  contents: write # to create a release
+  id-token: write # for the build-provenance attestation
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/cache-target
+      - name: Check the tag matches the release version
+        run: cargo xtask check-tag "$GITHUB_REF_NAME"
+      - name: Download the build that CI made for this commit
+        run: cargo xtask download-ci-build "$GITHUB_SHA"
+      # Attest the files, then publish them.
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            ffmpeg/dist/ffmpeg-remux.wasm
+            ffmpeg/dist/ffmpeg-*.tar.xz
+      - name: Create the release
+        run: cargo xtask publish-release "$GITHUB_REF_NAME"

@@ -1,0 +1,46 @@
+name: CI
+
+# Exercises everything in the repository without publishing anything: the
+# checks are `cargo xtask ci`, which you can run yourself. The release workflow
+# (release.yml) is the one that publishes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/cache-target
+      - uses: ./.github/actions/setup
+      - run: cargo xtask ci lint
+
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/cache-target
+      # FFmpeg's download and compiled objects. They depend only on the FFmpeg
+      # version and flags and on the Emscripten version, so those are the key;
+      # there is deliberately no fallback key, because objects built by another
+      # Emscripten would be linked into the module.
+      - uses: actions/cache@v6
+        with:
+          path: ffmpeg/build
+          key: >-
+            ffmpeg-build-${{ runner.os }}-${{
+            hashFiles('crates/xtask/src/wasm/flags.rs',
+            'ffmpeg/EMSCRIPTEN_VERSION') }}
+      - uses: ./.github/actions/setup
+      - run: cargo xtask ci build
+      - uses: ./.github/actions/upload-dist

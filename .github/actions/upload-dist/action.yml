@@ -1,0 +1,13 @@
+name: Upload the build output
+description: >
+  Uploads ffmpeg/dist/ as the workflow artifact ffmpeg-remux-wasm. Safe to run
+  again in the same run (a re-run replaces the artifact).
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@v7
+      with:
+        name: ffmpeg-remux-wasm
+        path: ffmpeg/dist/
+        if-no-files-found: error
+        overwrite: true

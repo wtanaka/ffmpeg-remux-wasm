@@ -1,0 +1,31 @@
+name: Set up the build machine
+description: >
+  Runs .ci/setup-ubuntu.sh (Emscripten, dprint, shfmt), caching what it
+  installs, and puts the tools on the PATH for the steps that follow.
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@v6
+      with:
+        # Everything the script writes, so a restored cache is a finished
+        # setup (its stamp file is in the cache too, and the script then exits
+        # at once).
+        path: |
+          ~/emsdk
+          ~/.cache/ffmpeg-remux-wasm
+          ~/.local/bin/shfmt
+          ~/.cargo/bin/dprint
+          ~/.cargo/bin/cargo-binstall
+        key: >-
+          setup-${{ runner.os }}-${{ hashFiles('.ci/*',
+          'ffmpeg/EMSCRIPTEN_VERSION') }}
+    - name: Run .ci/setup-ubuntu.sh
+      shell: sh
+      run: sh .ci/setup-ubuntu.sh
+    - name: Put the tools on the PATH
+      shell: sh
+      run: |
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        # The wasm task loads the Emscripten environment from here.
+        echo "EMSDK=$HOME/emsdk" >> "$GITHUB_ENV"

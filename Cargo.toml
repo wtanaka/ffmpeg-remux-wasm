@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+# The release version. A release is the tag v<version>, which
+# `cargo xtask check-tag` checks.
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+
+# Our own code is built without optimisation (quick to compile, with overflow
+# checks and debug assertions in the tests); only the dependencies are
+# optimised, which is what makes hashing large files fast.
+[profile.dev.package."*"]
+opt-level = 3

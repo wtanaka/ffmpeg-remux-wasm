@@ -1,0 +1,54 @@
+# Building ffmpeg-remux.wasm
+
+`ffmpeg-remux.wasm` is [FFmpeg](https://ffmpeg.org)'s libavformat, libavcodec
+and libavutil, which are licensed under the LGPL 2.1 or later, built as one
+Emscripten side module. This page says how, so you can build your own from the
+same source, or from a modified copy.
+
+## What is published
+
+- `ffmpeg-@FFMPEG_VERSION@.tar.xz`: the source that `ffmpeg-remux.wasm` is built
+  from. Its SHA-256 is `@FFMPEG_SHA256@`.
+- `FFmpeg-LGPL-2.1.txt`: the licence.
+- `ffmpeg-remux.wasm`: the built module, and `SHA256SUMS` for these files.
+- This page.
+
+## Building it
+
+You need the Emscripten SDK, version @EMSCRIPTEN_VERSION@.
+
+1. Unpack the source and enter it.
+
+2. Configure it. This flag set builds only what a copy-only remuxer needs, in
+   position-independent code, under the LGPL:
+
+   ```sh
+   emconfigure ./configure @FFMPEG_CONFIGURE_FLAGS@
+   ```
+
+3. Build the three libraries:
+
+   ```sh
+   emmake make libavformat/libavformat.a libavcodec/libavcodec.a \
+     libavutil/libavutil.a
+   ```
+
+4. Link them into one Emscripten side module. Save the list under "Functions the
+   module exports" below as `exports.txt`: one name per line, as written (with
+   the leading underscore that Emscripten expects).
+
+   ```sh
+   emcc libavformat/libavformat.a libavcodec/libavcodec.a \
+     libavutil/libavutil.a \
+     -sEXPORTED_FUNCTIONS=@exports.txt -o ffmpeg-remux.wasm @SIDE_LINK_FLAGS@
+   ```
+
+## Functions the module exports
+
+A program that loads the module looks these up by name (without the underscore).
+A replacement must export all of them, with the same signatures as in the FFmpeg
+release above, and so must keep that release's ABI:
+
+```
+@EXPORTS@
+```

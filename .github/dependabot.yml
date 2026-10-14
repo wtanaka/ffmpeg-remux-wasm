@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # The Rust dependencies of xtask (Cargo.lock).
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+  # The versions of the actions in the workflows and in the shared actions.
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/setup
+      - /.github/actions/upload-dist
+      - /.github/actions/cache-target
+    schedule:
+      interval: weekly

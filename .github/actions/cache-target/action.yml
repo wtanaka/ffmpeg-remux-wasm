@@ -1,0 +1,27 @@
+name: Cache the Rust build
+description: >
+  Caches the compiled dependencies in target/ (the sha2 crate and what it
+  depends on), one cache for each job, since each job builds different things.
+  Our own crate is compiled every run: cargo compares source file times, and a
+  fresh checkout makes them all new.
+runs:
+  using: composite
+  steps:
+    - id: rustc
+      shell: sh
+      run: |
+        echo "version=$(rustc --version | tr ' ' '-')" >> "$GITHUB_OUTPUT"
+        # Incremental compilation data only adds to the cache's size.
+        echo "CARGO_INCREMENTAL=0" >> "$GITHUB_ENV"
+    - uses: actions/cache@v6
+      with:
+        path: target
+        # The dependencies are a function of the compiler, the manifests, the
+        # lockfile and the cargo config, so no source hash (it would only
+        # store another copy of target/ whenever the code changed). One key
+        # for each job: a job that finishes first would otherwise save a cache
+        # without what the others build.
+        key: >-
+          target-${{ github.job }}-${{ runner.os }}-${{
+          steps.rustc.outputs.version }}-${{ hashFiles('Cargo.toml',
+          'Cargo.lock', 'crates/*/Cargo.toml', '.cargo/config.toml') }}
