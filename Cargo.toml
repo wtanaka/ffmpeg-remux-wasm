@@ -5,7 +5,7 @@ members = ["crates/*"]
 # The release version. A release is the tag v<version>, which
 # `cargo xtask check-tag` checks.
 [workspace.package]
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 
 # Our own code is built without optimisation (quick to compile, with overflow
