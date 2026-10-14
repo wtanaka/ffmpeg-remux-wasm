@@ -1,8 +1,9 @@
-//! `cargo xtask ci [lint|build]`: everything CI checks, so that the workflows
+//! `cargo xtask ci [lint|build]`: everything CI checks (graph.rs lists the
+//! tasks it runs after this), so that the workflows
 //! only call this and a contributor can run what CI runs.
 
 use crate::task::CiPart;
-use crate::{commits, fmt, notes, package, process, wasm, Result};
+use crate::{commits, fmt, notes, process, Result};
 
 /// clippy, with every warning an error.
 const CLIPPY: [&str; 6] = [
@@ -24,21 +25,19 @@ fn shellcheck_args(scripts: &[String]) -> Vec<String> {
     args
 }
 
-/// Formatting, shell scripts (shellcheck), clippy, the release-notes
-/// configuration and the commit messages since the last release.
+/// Shell scripts (shellcheck), clippy, the release-notes configuration and the
+/// commit messages since the last release. The formatting check runs before
+/// this, as a step.
 fn lint() -> Result {
-    fmt::run(true)?;
     process::run("shellcheck", &shellcheck_args(&fmt::shell_scripts()?))?;
     process::run("cargo", &CLIPPY)?;
     notes::check_config()?;
     commits::check()
 }
 
-/// The tests, the module, and the project zip.
+/// The tests. The module and the project zip are steps.
 fn build() -> Result {
-    process::run("cargo", &["test", "--workspace"])?;
-    wasm::run()?;
-    package::run(None)
+    process::run("cargo", &["test", "--workspace"])
 }
 
 pub fn run(part: &CiPart) -> Result {

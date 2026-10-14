@@ -112,7 +112,7 @@ pub fn no_ci_run_message(sha: &str) -> String {
     )
 }
 
-/// `cargo xtask download-ci-build <commit sha>`: downloads the build that CI
+/// `cargo xtask ci-download-build <commit sha>`: downloads the build that CI
 /// made for the commit into ffmpeg/dist/ and checks it against its SHA256SUMS.
 /// Fails if CI has not passed for that commit.
 pub fn download_ci_build(sha: &str) -> Result {
@@ -125,14 +125,14 @@ pub fn download_ci_build(sha: &str) -> Result {
     checksums::verify(&dist)
 }
 
-/// `cargo xtask publish-release <tag>`: publishes ffmpeg/dist/ as the GitHub
+/// `cargo xtask ci-publish-release <tag>`: publishes ffmpeg/dist/ as the GitHub
 /// release for the tag. Safe to run again: the release is created once, and
 /// its files are added or replaced.
 pub fn publish_release(tag: &str) -> Result {
     let dist = paths::abs(paths::DIST_DIR);
     let names = io::list_dir(&dist).map_err(|e| {
         format!(
-            "{e} (run `cargo xtask wasm` or `cargo xtask download-ci-build \
+            "{e} (run `cargo xtask wasm` or `cargo xtask ci-download-build \
              <sha>` first)"
         )
     })?;

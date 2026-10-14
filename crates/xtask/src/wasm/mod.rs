@@ -13,7 +13,7 @@
 mod flags;
 
 use crate::process::{self, Env};
-use crate::{check_exports, checksums, io, paths, Result};
+use crate::{checksums, io, paths, Result};
 use std::path::Path;
 
 const LICENSE_LINE: &str =
@@ -265,13 +265,6 @@ pub fn run() -> Result {
     let module = build.join(paths::MODULE_NAME);
     let link = link_args(&exports.to_string_lossy(), &module.to_string_lossy());
     process::run_in(&tree, &env, "emcc", &link)?;
-
-    // The module must export every function the list names, so a bad link
-    // fails here and not in a program that loads it.
-    check_exports::run(
-        Some(&exports.to_string_lossy()),
-        Some(&module.to_string_lossy()),
-    )?;
 
     io::remove_if_exists(&dist)?;
     io::create_dir_all(&dist)?;

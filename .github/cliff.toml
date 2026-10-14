@@ -1,5 +1,5 @@
 # git-cliff writes the release notes from the commit messages (Conventional
-# Commits). `cargo xtask publish-release` runs it; to preview what the next
+# Commits). `cargo xtask ci-publish-release` runs it; to preview what the next
 # release would say: git cliff --config .github/cliff.toml --unreleased
 #
 # The headings are ordered by the number in the comment before each name, which

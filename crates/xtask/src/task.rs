@@ -78,8 +78,8 @@ pub fn parse(args: &[String]) -> Result<Task, String> {
         }),
         ("check-tag", [tag]) => Ok(Task::CheckTag(own(tag))),
         ("release", [sha]) => Ok(Task::Release { sha: own(sha) }),
-        ("download-ci-build", [sha]) => Ok(Task::DownloadCiBuild(own(sha))),
-        ("publish-release", [tag]) => Ok(Task::PublishRelease(own(tag))),
+        ("ci-download-build", [sha]) => Ok(Task::DownloadCiBuild(own(sha))),
+        ("ci-publish-release", [tag]) => Ok(Task::PublishRelease(own(tag))),
         ("package", []) => Ok(Task::Package { output: None }),
         ("package", [output]) => Ok(Task::Package {
             output: Some(own(output)),

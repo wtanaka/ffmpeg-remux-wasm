@@ -29,7 +29,7 @@ jobs:
       - name: Check the tag matches the release version
         run: cargo xtask check-tag "$GITHUB_REF_NAME"
       - name: Download the build that CI made for this commit
-        run: cargo xtask download-ci-build "$GITHUB_SHA"
+        run: cargo xtask ci-download-build "$GITHUB_SHA"
       # Attest the files, then publish them.
       - uses: actions/attest-build-provenance@v4
         with:
@@ -37,4 +37,4 @@ jobs:
             ffmpeg/dist/ffmpeg-remux.wasm
             ffmpeg/dist/ffmpeg-*.tar.xz
       - name: Create the release
-        run: cargo xtask publish-release "$GITHUB_REF_NAME"
+        run: cargo xtask ci-publish-release "$GITHUB_REF_NAME"
