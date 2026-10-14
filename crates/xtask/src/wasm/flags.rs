@@ -12,7 +12,7 @@ pub const FFMPEG_SHA256: &str =
 ///
 /// One flag per line, sorted, so that a duplicate or a missing flag is easy to
 /// see. Keep --disable-everything before the --enable-* flags (it sorts first).
-pub const CONFIGURE_FLAGS: [&str; 40] = [
+pub const CONFIGURE_FLAGS: [&str; 41] = [
     "--ar=emar",
     "--arch=x86_32",
     "--cc=emcc",
@@ -38,6 +38,10 @@ pub const CONFIGURE_FLAGS: [&str; 40] = [
     "--enable-bsf=h264_mp4toannexb",
     "--enable-bsf=hevc_mp4toannexb",
     "--enable-cross-compile",
+    // avformat_find_stream_info decodes a frame of the camera's MJPEG
+    // thumbnail track to learn its size. Without a decoder the stream has no
+    // dimensions and the MP4 header cannot be written.
+    "--enable-decoder=mjpeg",
     "--enable-demuxer=concat",
     "--enable-demuxer=mov",
     "--enable-muxer=mov",
@@ -62,3 +66,16 @@ pub const CONFIGURE_FLAGS: [&str; 40] = [
 /// exports every one.
 pub const SIDE_LINK_FLAGS: [&str; 3] =
     ["-Oz", "-sSIDE_MODULE=2", "-sWASM_BIGINT=1"];
+
+#[cfg(test)]
+mod tests {
+    use super::CONFIGURE_FLAGS;
+
+    /// A camera's MJPEG thumbnail track has no size in the file; FFmpeg
+    /// finds it by decoding a frame, so a module without the decoder cannot
+    /// write an MP4 header for a file that has the track.
+    #[test]
+    fn the_mjpeg_decoder_is_enabled() {
+        assert!(CONFIGURE_FLAGS.contains(&"--enable-decoder=mjpeg"));
+    }
+}
