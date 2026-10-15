@@ -115,7 +115,7 @@ checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
 name = "gen-ffmpeg-bindings"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "bindgen",
 ]
@@ -299,7 +299,7 @@ checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
 
 [[package]]
 name = "xtask"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "sha2",
 ]
