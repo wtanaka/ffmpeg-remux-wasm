@@ -1,0 +1,9 @@
+[package]
+name = "gen-ffmpeg-bindings"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+# Generates ffmpeg/dist/ffmpeg_remux_bindings.rs: run by `cargo xtask wasm`, not published.
+[dependencies]
+bindgen = "0.72"

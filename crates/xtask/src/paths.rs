@@ -52,6 +52,8 @@ pub const MODULE_NAME: &str = module_name!();
 /// What a release holds, besides the module and FFmpeg's source.
 pub const LICENSE_NAME: &str = "FFmpeg-LGPL-2.1.txt";
 pub const DOC_NAME: &str = "FFMPEG-BUILD.md";
+/// Rust declarations for the structs consumers read (generated).
+pub const BINDINGS_NAME: &str = "ffmpeg_remux_bindings.rs";
 pub const SUMS_NAME: &str = "SHA256SUMS";
 /// The built module.
 pub const MODULE: &str = concat!(ffmpeg_dir!(), "/dist/", module_name!());

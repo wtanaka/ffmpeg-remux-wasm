@@ -1,11 +1,13 @@
 //! `cargo xtask wasm`: builds ffmpeg-remux.wasm, FFmpeg's libavformat,
 //! libavcodec and libavutil as one Emscripten side module, and assembles what a
 //! release publishes into ffmpeg/dist/: the module, the FFmpeg source it was
-//! built from, FFmpeg's licence, the build instructions and SHA256SUMS. The
-//! flags are in flags.rs.
+//! built from, FFmpeg's licence, the build instructions, the Rust bindings for
+//! the structs consumers read (made by crates/gen-ffmpeg-bindings) and SHA256SUMS.
+//! The flags are in flags.rs.
 //!
 //! Needs an Emscripten SDK (on the PATH, or EMSDK set) at the version in
-//! ffmpeg/EMSCRIPTEN_VERSION, plus curl, make, tar and xz.
+//! ffmpeg/EMSCRIPTEN_VERSION, plus curl, make, tar, xz and libclang (for the
+//! bindings).
 //!
 //! The decisions (command lines, checks, the build instructions) are pure
 //! functions with tests; `run` does the reading, writing and running.
@@ -143,6 +145,33 @@ fn make_args(jobs: usize) -> Vec<String> {
     args
 }
 
+/// `cargo` arguments: run the bindings generator on the configured source tree
+/// and the Emscripten sysroot, writing `output`.
+fn bindings_args(source: &str, sysroot: &str, output: &str) -> Vec<String> {
+    let mut args = process::args(&[
+        "run",
+        "--quiet",
+        "--package",
+        "gen-ffmpeg-bindings",
+        "--",
+    ]);
+    args.extend(
+        [source, sysroot, output, flags::FFMPEG_VERSION].map(String::from),
+    );
+    args
+}
+
+/// The Emscripten sysroot's headers, in the SDK that `env` loads.
+fn sysroot_include(env: &Env) -> Result<std::path::PathBuf> {
+    let emsdk = env
+        .iter()
+        .find(|(key, _)| key == "EMSDK")
+        .map(|(_, value)| value.clone())
+        .or_else(|| std::env::var("EMSDK").ok())
+        .ok_or("EMSDK is not set: the bindings need the sysroot of the Emscripten SDK")?;
+    Ok(Path::new(&emsdk).join("upstream/emscripten/cache/sysroot/include"))
+}
+
 /// `emcc` arguments: link the libraries into the module.
 fn link_args(exports: &str, module: &str) -> Vec<String> {
     let mut args: Vec<String> =
@@ -274,6 +303,17 @@ pub fn run() -> Result {
         &tree.join("COPYING.LGPLv2.1"),
         &dist.join(paths::LICENSE_NAME),
     )?;
+    let sysroot = sysroot_include(&env)?;
+    process::run_in(
+        &root,
+        &env,
+        "cargo",
+        &bindings_args(
+            &tree.to_string_lossy(),
+            &sysroot.to_string_lossy(),
+            &dist.join(paths::BINDINGS_NAME).to_string_lossy(),
+        ),
+    )?;
     let doc = build_doc(
         &io::read_to_string(&root.join(paths::BUILD_DOC_TEMPLATE))?,
         &io::read_to_string(&exports)?,
@@ -287,6 +327,7 @@ pub fn run() -> Result {
             tarball.as_str(),
             paths::LICENSE_NAME,
             paths::DOC_NAME,
+            paths::BINDINGS_NAME,
         ],
     )?;
     println!("wrote {}/:\n{sums}", paths::DIST_DIR);

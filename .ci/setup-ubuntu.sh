@@ -20,7 +20,7 @@
 # change a version or SETUP_REV, to install again.
 set -eu
 
-SETUP_REV=4 # bump when this script changes what it installs
+SETUP_REV=5 # bump when this script changes what it installs
 case $0 in
   */*) HERE=${0%/*} ;;
   *) HERE=. ;;
@@ -62,9 +62,10 @@ echo "==> system packages"
 $SUDO apt-get update
 # git, python3 and xz-utils: the Emscripten SDK; build-essential: FFmpeg's
 # configure and make; shellcheck: `cargo xtask ci lint`; curl: downloads;
-# ca-certificates: https.
+# ca-certificates: https; libclang-dev: the bindings generator (bindgen).
 $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  build-essential ca-certificates curl git make python3 shellcheck xz-utils
+  build-essential ca-certificates curl git libclang-dev make python3 shellcheck \
+  xz-utils
 
 echo "==> Rust"
 if [ ! -x "$HOME/.cargo/bin/cargo" ] && ! command -v cargo > /dev/null; then
