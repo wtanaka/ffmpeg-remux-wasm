@@ -6,4 +6,4 @@ publish = false
 
 # Generates ffmpeg/dist/ffmpeg_remux_bindings.rs: run by `cargo xtask wasm`, not published.
 [dependencies]
-bindgen = "0.72"
+bindgen = "0.73"
