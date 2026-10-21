@@ -36,5 +36,7 @@ jobs:
           subject-path: |
             ffmpeg/dist/ffmpeg-remux.wasm
             ffmpeg/dist/ffmpeg-*.tar.xz
+            ffmpeg/dist/Emscripten-LICENSE.txt
+            ffmpeg/dist/musl-COPYRIGHT.txt
       - name: Create the release
         run: cargo xtask ci-publish-release "$GITHUB_REF_NAME"

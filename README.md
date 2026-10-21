@@ -7,8 +7,9 @@ without decoding or encoding them.
 ## Download
 
 - [Latest release](https://github.com/wtanaka/ffmpeg-remux-wasm/releases/latest):
-  `ffmpeg-remux.wasm`, the FFmpeg source, the licence, `FFMPEG-BUILD.md` and
-  `SHA256SUMS`.
+  `ffmpeg-remux.wasm`, the FFmpeg source, the licences, `FFMPEG-BUILD.md`,
+  `ffmpeg_remux_bindings.rs` and `SHA256SUMS`. The licences are
+  `FFmpeg-LGPL-2.1.txt`, `Emscripten-LICENSE.txt` and `musl-COPYRIGHT.txt`.
 - Built by GitHub Actions. The module and the FFmpeg source are attested: check
   one with `gh attestation verify <file> --repo wtanaka/ffmpeg-remux-wasm`.
 - To build it yourself or contribute, see
@@ -28,3 +29,7 @@ that consumers read: `AVFormatContext`, `AVStream`, `AVCodecParameters`,
 - `ffmpeg-remux.wasm` and `ffmpeg_remux_bindings.rs`: FFmpeg's own code, LGPL
   2.1 or later (`FFmpeg-LGPL-2.1.txt`). `ffmpeg_remux_bindings.rs` is derived
   from FFmpeg's headers.
+- The Emscripten runtime and musl libc, which `ffmpeg-remux.wasm` and any
+  program linked with it contain: `Emscripten-LICENSE.txt` and
+  `musl-COPYRIGHT.txt`, copied from the Emscripten SDK version named in
+  `FFMPEG-BUILD.md`.

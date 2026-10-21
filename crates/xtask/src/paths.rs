@@ -51,6 +51,10 @@ pub const EXPORTS_LIST: &str = concat!(ffmpeg_dir!(), "/exports.txt");
 pub const MODULE_NAME: &str = module_name!();
 /// What a release holds, besides the module and FFmpeg's source.
 pub const LICENSE_NAME: &str = "FFmpeg-LGPL-2.1.txt";
+/// The licences of the Emscripten runtime and of musl libc, which the module
+/// and any program linked with it contain. Copied from the Emscripten SDK.
+pub const EMSCRIPTEN_LICENSE_NAME: &str = "Emscripten-LICENSE.txt";
+pub const MUSL_COPYRIGHT_NAME: &str = "musl-COPYRIGHT.txt";
 pub const DOC_NAME: &str = "FFMPEG-BUILD.md";
 /// Rust declarations for the structs consumers read (generated).
 pub const BINDINGS_NAME: &str = "ffmpeg_remux_bindings.rs";

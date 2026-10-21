@@ -10,6 +10,11 @@ same source, or from a modified copy.
 - `ffmpeg-@FFMPEG_VERSION@.tar.xz`: the source that `ffmpeg-remux.wasm` is built
   from. Its SHA-256 is `@FFMPEG_SHA256@`.
 - `FFmpeg-LGPL-2.1.txt`: the licence.
+- `Emscripten-LICENSE.txt` and `musl-COPYRIGHT.txt`: the licences of the
+  Emscripten runtime and of musl libc, copied from the Emscripten SDK
+  @EMSCRIPTEN_VERSION@ that built the module. `ffmpeg-remux.wasm`, and any
+  program linked with it with that SDK, contain that runtime and musl libc, so
+  their notices come with these texts.
 - `ffmpeg-remux.wasm`: the built module, and `SHA256SUMS` for these files.
 - `ffmpeg_remux_bindings.rs`: Rust declarations for the structs of FFmpeg's
   headers that a program reads (`AVFormatContext`, `AVPacket` and others), with

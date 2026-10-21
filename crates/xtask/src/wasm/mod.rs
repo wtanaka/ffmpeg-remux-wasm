@@ -1,8 +1,9 @@
 //! `cargo xtask wasm`: builds ffmpeg-remux.wasm, FFmpeg's libavformat,
 //! libavcodec and libavutil as one Emscripten side module, and assembles what a
 //! release publishes into ffmpeg/dist/: the module, the FFmpeg source it was
-//! built from, FFmpeg's licence, the build instructions, the Rust bindings for
-//! the structs consumers read (made by crates/gen-ffmpeg-bindings) and SHA256SUMS.
+//! built from, FFmpeg's licence, the licences of the Emscripten runtime and musl
+//! libc (copied from the SDK), the build instructions, the Rust bindings for the
+//! structs consumers read (made by crates/gen-ffmpeg-bindings) and SHA256SUMS.
 //! The flags are in flags.rs.
 //!
 //! Needs an Emscripten SDK (on the PATH, or EMSDK set) at the version in
@@ -161,15 +162,63 @@ fn bindings_args(source: &str, sysroot: &str, output: &str) -> Vec<String> {
     args
 }
 
-/// The Emscripten sysroot's headers, in the SDK that `env` loads.
-fn sysroot_include(env: &Env) -> Result<std::path::PathBuf> {
+/// The Emscripten SDK's folder, in the SDK that `env` loads.
+fn sdk_dir(env: &Env) -> Result<std::path::PathBuf> {
     let emsdk = env
         .iter()
         .find(|(key, _)| key == "EMSDK")
         .map(|(_, value)| value.clone())
         .or_else(|| std::env::var("EMSDK").ok())
-        .ok_or("EMSDK is not set: the bindings need the sysroot of the Emscripten SDK")?;
-    Ok(Path::new(&emsdk).join("upstream/emscripten/cache/sysroot/include"))
+        .ok_or("EMSDK is not set: the bindings need the sysroot of the Emscripten SDK, and the licences are copied from it")?;
+    Ok(std::path::PathBuf::from(emsdk))
+}
+
+/// The Emscripten sysroot's headers, in the SDK that `env` loads.
+fn sysroot_include(env: &Env) -> Result<std::path::PathBuf> {
+    Ok(sdk_dir(env)?.join("upstream/emscripten/cache/sysroot/include"))
+}
+
+/// Where the licence texts of the Emscripten runtime and of musl libc are, in
+/// the SDK's `upstream/emscripten` folder, with the name each is published
+/// under.
+fn licence_sources(root: &Path) -> [(std::path::PathBuf, &'static str); 2] {
+    [
+        (root.join("LICENSE"), paths::EMSCRIPTEN_LICENSE_NAME),
+        (
+            root.join("system/lib/libc/musl/COPYRIGHT"),
+            paths::MUSL_COPYRIGHT_NAME,
+        ),
+    ]
+}
+
+/// Checks that a licence text copied from the SDK is not empty.
+fn check_licence_text(
+    path: &Path,
+    text: &str,
+) -> std::result::Result<(), String> {
+    if text.trim().is_empty() {
+        Err(format!(
+            "{} is empty. A release holds the licence texts of the Emscripten \
+             runtime and musl libc, so they must be in the SDK.",
+            path.display()
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+/// The licence texts of the Emscripten runtime and musl libc, read from the SDK
+/// that `env` loads, each with the name it is published under. Read before the
+/// build, so that a missing one fails early.
+fn runtime_licences(env: &Env) -> Result<Vec<(&'static str, String)>> {
+    let root = sdk_dir(env)?.join("upstream/emscripten");
+    let mut licences = Vec::new();
+    for (path, name) in licence_sources(&root) {
+        let text = io::read_to_string(&path)?;
+        check_licence_text(&path, &text)?;
+        licences.push((name, text));
+    }
+    Ok(licences)
 }
 
 /// `emcc` arguments: link the libraries into the module.
@@ -256,6 +305,7 @@ pub fn run() -> Result {
     {
         eprintln!("{warning}");
     }
+    let licences = runtime_licences(&env)?;
     io::create_dir_all(&build)?;
 
     // The release tarball, downloaded once and refused unless its checksum is
@@ -303,6 +353,9 @@ pub fn run() -> Result {
         &tree.join("COPYING.LGPLv2.1"),
         &dist.join(paths::LICENSE_NAME),
     )?;
+    for (name, text) in &licences {
+        io::write(&dist.join(name), text)?;
+    }
     let sysroot = sysroot_include(&env)?;
     process::run_in(
         &root,
@@ -326,6 +379,8 @@ pub fn run() -> Result {
             paths::MODULE_NAME,
             tarball.as_str(),
             paths::LICENSE_NAME,
+            paths::EMSCRIPTEN_LICENSE_NAME,
+            paths::MUSL_COPYRIGHT_NAME,
             paths::DOC_NAME,
             paths::BINDINGS_NAME,
         ],
@@ -404,6 +459,24 @@ mod tests {
         assert!(tree_is_current(Some(&flags_text())));
         assert!(!tree_is_current(Some("--other")));
         assert!(!tree_is_current(None));
+    }
+
+    #[test]
+    fn the_runtime_licences_are_in_the_sdk_root() {
+        let root = Path::new("/sdk/upstream/emscripten");
+        let sources = licence_sources(root);
+        assert_eq!(sources[0].0, root.join("LICENSE"));
+        assert_eq!(sources[0].1, "Emscripten-LICENSE.txt");
+        assert_eq!(sources[1].0, root.join("system/lib/libc/musl/COPYRIGHT"));
+        assert_eq!(sources[1].1, "musl-COPYRIGHT.txt");
+    }
+
+    #[test]
+    fn an_empty_licence_text_is_refused() {
+        let path = Path::new("LICENSE");
+        assert!(check_licence_text(path, "MIT License\n").is_ok());
+        let error = check_licence_text(path, " \n").unwrap_err();
+        assert!(error.contains("LICENSE is empty"), "{error}");
     }
 
     #[test]
