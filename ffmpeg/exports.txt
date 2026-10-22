@@ -14,6 +14,7 @@ _avformat_free_context
 _avformat_close_input
 _av_write_trailer
 _av_read_frame
+_av_seek_frame
 _av_interleaved_write_frame
 _av_packet_alloc
 _av_packet_free
