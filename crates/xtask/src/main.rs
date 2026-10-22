@@ -11,6 +11,7 @@ mod checksums;
 mod ci;
 mod clean;
 mod commits;
+mod dist;
 mod fmt;
 mod gh;
 mod github;
@@ -46,7 +47,8 @@ fn own(task: &Task) -> Result {
         Task::CheckExports { list, module } => {
             check_exports::run(list.as_deref(), module.as_deref())
         }
-        Task::CheckModule => check_module::run(),
+        Task::CheckModule { dir } => check_module::run(dir.as_deref()),
+        Task::Dist => dist::run(),
         Task::CheckTag(tag) => release::check_tag(tag),
         Task::Release { sha } => tag::run(sha),
         Task::DownloadCiBuild(sha) => github::download_ci_build(sha),

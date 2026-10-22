@@ -1,6 +1,7 @@
 //! `cargo xtask clean [--all]`: removes what the other tasks generate.
 //!
-//! By default the cheap thing: ffmpeg/dist/ (the release files). `--all` also
+//! By default the cheap thing: ffmpeg/dist/ (the release files) and the staged
+//! copy of them. `--all` also
 //! removes ffmpeg/build/ (the downloaded FFmpeg source and its compiled
 //! objects, which take a download and several minutes to get back) and runs
 //! `cargo clean`.
@@ -10,9 +11,9 @@ use crate::{io, paths, process, Result};
 /// What to remove, relative to the repository root.
 fn targets(all: bool) -> Vec<&'static str> {
     if all {
-        vec![paths::DIST_DIR, paths::BUILD_DIR]
+        vec![paths::DIST_DIR, paths::STAGED_DIR, paths::BUILD_DIR]
     } else {
-        vec![paths::DIST_DIR]
+        vec![paths::DIST_DIR, paths::STAGED_DIR]
     }
 }
 
@@ -35,7 +36,10 @@ mod tests {
 
     #[test]
     fn the_build_tree_is_only_removed_with_all() {
-        assert_eq!(targets(false), vec![paths::DIST_DIR]);
-        assert_eq!(targets(true), vec![paths::DIST_DIR, paths::BUILD_DIR]);
+        assert_eq!(targets(false), vec![paths::DIST_DIR, paths::STAGED_DIR]);
+        assert_eq!(
+            targets(true),
+            vec![paths::DIST_DIR, paths::STAGED_DIR, paths::BUILD_DIR]
+        );
     }
 }

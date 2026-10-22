@@ -1,5 +1,5 @@
-//! `cargo xtask check-module`: loads the built module, ffmpeg/dist's
-//! ffmpeg-remux.wasm, in a small program and reads test videos with it, to
+//! `cargo xtask check-module [folder]`: loads the built module (the one in the
+//! folder, by default ffmpeg/dist/) in a small program and reads test videos with it, to
 //! check that libavformat finds in each what it should. The module's flags
 //! decide what libavformat and libavcodec contain, so this finds a missing
 //! decoder, parser or demuxer before a program loading the module does.
@@ -8,8 +8,9 @@
 //! wasm32-unknown-emscripten with the bindings that `wasm` generated, so it
 //! also checks that their layout matches the module. `rustc` links it against
 //! the module, and `node` (from the Emscripten SDK) runs it. The videos are made
-//! by synthvid (a library, pinned in Cargo.toml). Needs the module, so run
-//! `wasm` first, and the Rust target (`rustup target add`).
+//! by synthvid (a library, pinned in Cargo.toml). Needs the module and its
+//! bindings in the folder, so run `wasm` first, and the Rust target
+//! (`rustup target add`).
 
 use crate::process;
 use crate::{io, paths, wasm, Result};
@@ -92,8 +93,10 @@ fn media_of(name: &str) -> Result<(String, Vec<u8>)> {
     ))
 }
 
-pub fn run() -> Result {
-    let module = paths::abs(paths::MODULE);
+pub fn run(dir: Option<&str>) -> Result {
+    let dir = dir
+        .map_or_else(|| paths::abs(paths::DIST_DIR), std::path::PathBuf::from);
+    let module = dir.join(paths::MODULE_NAME);
     if !module.is_file() {
         return Err(format!(
             "{} is not built; run `cargo xtask wasm` first",
@@ -109,7 +112,7 @@ pub fn run() -> Result {
     // program finds them by name.
     io::copy(&module, &work.join(paths::MODULE_NAME))?;
     io::copy(
-        &paths::abs(paths::DIST_DIR).join(paths::BINDINGS_NAME),
+        &dir.join(paths::BINDINGS_NAME),
         &work.join(paths::BINDINGS_NAME),
     )?;
     io::copy(

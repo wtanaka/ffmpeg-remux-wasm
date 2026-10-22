@@ -1,10 +1,11 @@
 //! `cargo xtask wasm`: builds ffmpeg-remux.wasm, FFmpeg's libavformat,
 //! libavcodec and libavutil as one Emscripten side module, and assembles what a
-//! release publishes into ffmpeg/dist/: the module, the FFmpeg source it was
+//! release publishes: the module, the FFmpeg source it was
 //! built from, FFmpeg's licence, the licences of the Emscripten runtime and musl
 //! libc (copied from the SDK), the build instructions, the Rust bindings for the
 //! structs consumers read (made by crates/gen-ffmpeg-bindings) and SHA256SUMS.
-//! The flags are in flags.rs.
+//! They are made in ffmpeg/build/staged/, checked there (see graph.rs), and only
+//! then replace ffmpeg/dist/. The flags are in flags.rs.
 //!
 //! Needs an Emscripten SDK (on the PATH, or EMSDK set) at the version in
 //! ffmpeg/EMSCRIPTEN_VERSION, plus curl, make, tar, xz and libclang (for the
@@ -301,7 +302,7 @@ fn emscripten_env(wanted: &str) -> Result<Env> {
 
 pub fn run() -> Result {
     let root = paths::root();
-    let dist = paths::abs(paths::DIST_DIR);
+    let staged = paths::abs(paths::STAGED_DIR);
     let build = paths::abs(paths::BUILD_DIR);
     let exports = paths::abs(paths::EXPORTS_LIST);
     let tarball = tarball_name();
@@ -357,16 +358,16 @@ pub fn run() -> Result {
     let link = link_args(&exports.to_string_lossy(), &module.to_string_lossy());
     process::run_in(&tree, &env, "emcc", &link)?;
 
-    io::remove_if_exists(&dist)?;
-    io::create_dir_all(&dist)?;
-    io::copy(&module, &dist.join(paths::MODULE_NAME))?;
-    io::copy(&tarball_path, &dist.join(&tarball))?;
+    io::remove_if_exists(&staged)?;
+    io::create_dir_all(&staged)?;
+    io::copy(&module, &staged.join(paths::MODULE_NAME))?;
+    io::copy(&tarball_path, &staged.join(&tarball))?;
     io::copy(
         &tree.join("COPYING.LGPLv2.1"),
-        &dist.join(paths::LICENSE_NAME),
+        &staged.join(paths::LICENSE_NAME),
     )?;
     for (name, text) in &licences {
-        io::write(&dist.join(name), text)?;
+        io::write(&staged.join(name), text)?;
     }
     let sysroot = sysroot_include(&env)?;
     process::run_in(
@@ -376,7 +377,7 @@ pub fn run() -> Result {
         &bindings_args(
             &tree.to_string_lossy(),
             &sysroot.to_string_lossy(),
-            &dist.join(paths::BINDINGS_NAME).to_string_lossy(),
+            &staged.join(paths::BINDINGS_NAME).to_string_lossy(),
         ),
     )?;
     let doc = build_doc(
@@ -384,9 +385,9 @@ pub fn run() -> Result {
         &io::read_to_string(&exports)?,
         &emscripten,
     );
-    io::write(&dist.join(paths::DOC_NAME), &doc)?;
+    io::write(&staged.join(paths::DOC_NAME), &doc)?;
     let sums = checksums::write(
-        &dist,
+        &staged,
         &[
             paths::MODULE_NAME,
             tarball.as_str(),
@@ -397,7 +398,7 @@ pub fn run() -> Result {
             paths::BINDINGS_NAME,
         ],
     )?;
-    println!("wrote {}/:\n{sums}", paths::DIST_DIR);
+    println!("built {}/:\n{sums}", paths::STAGED_DIR);
     Ok(())
 }
 

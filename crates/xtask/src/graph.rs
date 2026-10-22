@@ -1,6 +1,7 @@
 //! Which tasks a task runs. `main.rs` runs exactly these, and the help lists
 //! exactly these, so the list cannot say something the code does not do.
 
+use crate::paths;
 use crate::task::{CiPart, Task};
 
 /// The name a task is typed as.
@@ -12,13 +13,19 @@ pub fn name(task: &Task) -> &'static str {
         Task::Fmt { .. } => "fmt",
         Task::Clean { .. } => "clean",
         Task::CheckExports { .. } => "check-exports",
-        Task::CheckModule => "check-module",
+        Task::CheckModule { .. } => "check-module",
+        Task::Dist => "dist",
         Task::CheckTag(_) => "check-tag",
         Task::Release { .. } => "release",
         Task::DownloadCiBuild(_) => "ci-download-build",
         Task::PublishRelease(_) => "ci-publish-release",
         Task::Package { .. } => "package",
     }
+}
+
+/// A path in the repository as an absolute one, as the tasks take it.
+fn absolute(path: &str) -> String {
+    paths::abs(path).to_string_lossy().to_string()
 }
 
 fn check_exports() -> Task {
@@ -43,9 +50,19 @@ pub fn before(task: &Task) -> Vec<Task> {
 pub fn after(task: &Task) -> Vec<Task> {
     let package = || Task::Package { output: None };
     match task {
-        // The module must export every function the list names, so a bad
-        // link fails here and not in a program that loads it.
-        Task::Wasm => vec![check_exports(), Task::CheckModule],
+        // The staged module must export every function the list names and
+        // read a test video, so a bad link or a missing codec fails here and
+        // not in a program that loads it. Only then does it replace dist/.
+        Task::Wasm => vec![
+            Task::CheckExports {
+                list: None,
+                module: Some(absolute(paths::STAGED_MODULE)),
+            },
+            Task::CheckModule {
+                dir: Some(absolute(paths::STAGED_DIR)),
+            },
+            Task::Dist,
+        ],
         Task::Ci(CiPart::Build | CiPart::All) => {
             vec![Task::Wasm, package()]
         }
@@ -70,7 +87,8 @@ fn variants() -> Vec<Task> {
         Task::Fmt { check: false },
         Task::Clean { all: false },
         check_exports(),
-        Task::CheckModule,
+        Task::CheckModule { dir: None },
+        Task::Dist,
         Task::CheckTag(String::new()),
         Task::Release { sha: String::new() },
         Task::DownloadCiBuild(String::new()),
@@ -99,7 +117,7 @@ mod tests {
     #[test]
     fn ci_runs_the_lint_the_module_and_the_zip() {
         assert_eq!(runs_of("ci"), ["fmt", "wasm", "package"]);
-        assert_eq!(runs_of("wasm"), ["check-exports", "check-module"]);
+        assert_eq!(runs_of("wasm"), ["check-exports", "check-module", "dist"]);
         assert!(runs_of("fmt").is_empty());
     }
 
@@ -116,6 +134,17 @@ mod tests {
         for task in variants() {
             let listed = crate::help::usage_of(name(&task));
             assert!(listed.is_some(), "{} is not in the help", name(&task));
+        }
+    }
+
+    #[test]
+    fn wasm_checks_the_staged_build_before_it_replaces_dist() {
+        let steps = after(&Task::Wasm);
+        assert_eq!(steps.last(), Some(&Task::Dist));
+        for step in &steps[..steps.len() - 1] {
+            let text = format!("{step:?}");
+            assert!(text.contains("build/staged"), "{text}");
+            assert!(!text.contains("dist/"), "{text}");
         }
     }
 

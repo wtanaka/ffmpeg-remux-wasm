@@ -18,7 +18,7 @@ struct Task {
 
 /// Every task. The help lists them in dependency order: each comes after the
 /// ones it runs or needs, and where there is no such order, in this order.
-const TASKS: [Task; 11] = [
+const TASKS: [Task; 12] = [
     Task {
         usage: "check-exports [exports.txt [module.wasm]]",
         needs: &[],
@@ -26,7 +26,7 @@ const TASKS: [Task; 11] = [
                 as its last step",
     },
     Task {
-        usage: "check-module",
+        usage: "check-module [folder]",
         needs: &[],
         place: "anywhere, on a module that is already built; `wasm` runs it \
                 after `check-exports`. Needs the Emscripten SDK and the Rust \
@@ -51,6 +51,11 @@ const TASKS: [Task; 11] = [
         usage: "check-tag <tag>",
         needs: &[],
         place: "anywhere (CI runs it on a release)",
+    },
+    Task {
+        usage: "dist",
+        needs: &[],
+        place: "anywhere, after `wasm` has staged a build; `wasm` runs it last",
     },
     Task {
         usage: "wasm",
@@ -147,8 +152,15 @@ fn about(name: &str) -> String {
     let (dist, build) = (paths::DIST_DIR, paths::BUILD_DIR);
     match name {
         "wasm" => format!(
-            "Builds {} into {dist}/. The first build takes a few minutes.",
-            paths::MODULE_NAME
+            "Builds {} in {staged}/, checks it there, and only then replaces \
+             {dist}/ with it, so {dist}/ never holds a module that failed a \
+             check. The first build takes a few minutes.",
+            paths::MODULE_NAME,
+            staged = paths::STAGED_DIR
+        ),
+        "dist" => format!(
+            "Replaces {dist}/ with the build in {}/. Fails if there is none.",
+            paths::STAGED_DIR
         ),
         "ci" => "What CI checks. `lint`: fmt --check, shellcheck, clippy, the \
                  release notes' configuration and the commit messages since \
@@ -169,11 +181,12 @@ fn about(name: &str) -> String {
             paths::EXPORTS_LIST,
             paths::MODULE
         ),
-        "check-module" => "Loads the built module in a small Rust program \
-                           and reads a test video from synthvid with it. Fails \
-                           if the module does not find in the video what it \
-                           should, for example because a decoder is missing."
-            .to_string(),
+        "check-module" => format!(
+            "Loads the module in the folder (default {dist}/) in a small Rust \
+             program and reads a test video from synthvid with it. Fails if \
+             the module does not find in the video what it should, for \
+             example because a decoder is missing."
+        ),
         "check-tag" => "Fails unless the tag is v<version>, where <version> \
                         is `version` in the root Cargo.toml."
             .to_string(),

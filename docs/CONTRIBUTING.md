@@ -7,7 +7,8 @@
 - Run `cargo xtask wasm`.
 - It downloads the FFmpeg source, checking its SHA-256 against the one in
   `crates/xtask/src/wasm/flags.rs`.
-- It builds the module and puts everything a release holds in `ffmpeg/dist/`.
+- It builds the module in `ffmpeg/build/staged/`, checks it, and only then puts
+  everything a release holds in `ffmpeg/dist/`.
 - The first build takes a few minutes.
 - The same source, flags and Emscripten version give the same bytes.
 
