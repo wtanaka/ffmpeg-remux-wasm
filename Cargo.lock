@@ -264,6 +264,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "synthvid-catalog"
+version = "0.0.1-alpha.1"
+source = "git+https://github.com/wtanaka/synthvid?rev=a7ac0f52b86a13ae8af860a7f0cb293ce8da8788#a7ac0f52b86a13ae8af860a7f0cb293ce8da8788"
+dependencies = [
+ "synthvid-encode",
+ "synthvid-scene",
+ "synthvid-video",
+]
+
+[[package]]
+name = "synthvid-encode"
+version = "0.0.1-alpha.1"
+source = "git+https://github.com/wtanaka/synthvid?rev=a7ac0f52b86a13ae8af860a7f0cb293ce8da8788#a7ac0f52b86a13ae8af860a7f0cb293ce8da8788"
+dependencies = [
+ "synthvid-scene",
+]
+
+[[package]]
+name = "synthvid-scene"
+version = "0.0.1-alpha.1"
+source = "git+https://github.com/wtanaka/synthvid?rev=a7ac0f52b86a13ae8af860a7f0cb293ce8da8788#a7ac0f52b86a13ae8af860a7f0cb293ce8da8788"
+
+[[package]]
+name = "synthvid-video"
+version = "0.0.1-alpha.1"
+source = "git+https://github.com/wtanaka/synthvid?rev=a7ac0f52b86a13ae8af860a7f0cb293ce8da8788#a7ac0f52b86a13ae8af860a7f0cb293ce8da8788"
+dependencies = [
+ "synthvid-encode",
+ "synthvid-scene",
+]
+
+[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -286,4 +318,5 @@ name = "xtask"
 version = "0.0.4"
 dependencies = [
  "sha2",
+ "synthvid-catalog",
 ]

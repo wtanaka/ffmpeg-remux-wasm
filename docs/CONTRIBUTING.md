@@ -15,6 +15,8 @@
 
 - `cargo xtask`: list the tasks.
 - `cargo xtask ci`: run what CI runs.
+- `cargo xtask check-module`: read a synthvid video with the built module.
+  `wasm` runs it. Needs `rustup target add wasm32-unknown-emscripten`.
 - Release: push the bump, let CI pass, `cargo xtask release <sha>`.
 - `cargo test`: decisions are pure functions; a thin layer does the I/O.
 - New task: its own file, then `help.rs`, `task.rs`, `main.rs`.
@@ -33,6 +35,7 @@
   - `FFMPEG-BUILD.md.in`: the template of the published build instructions.
   - `build/`: the FFmpeg download and its objects (generated).
   - `dist/`: the files a release holds (generated).
+  - `tests/`: the program `check-module` loads the module in.
 - `crates/xtask/`: the `cargo xtask` tasks.
   - `wasm/`: the module build; the FFmpeg version and flags are in `flags.rs`.
   - `paths.rs`: every path and file name.

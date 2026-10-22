@@ -18,12 +18,19 @@ struct Task {
 
 /// Every task. The help lists them in dependency order: each comes after the
 /// ones it runs or needs, and where there is no such order, in this order.
-const TASKS: [Task; 10] = [
+const TASKS: [Task; 11] = [
     Task {
         usage: "check-exports [exports.txt [module.wasm]]",
         needs: &[],
         place: "anywhere, on a module that is already built; `wasm` runs it \
                 as its last step",
+    },
+    Task {
+        usage: "check-module",
+        needs: &[],
+        place: "anywhere, on a module that is already built; `wasm` runs it \
+                after `check-exports`. Needs the Emscripten SDK and the Rust \
+                target wasm32-unknown-emscripten",
     },
     Task {
         usage: "fmt [--check]",
@@ -162,6 +169,11 @@ fn about(name: &str) -> String {
             paths::EXPORTS_LIST,
             paths::MODULE
         ),
+        "check-module" => "Loads the built module in a small Rust program \
+                           and reads a test video from synthvid with it. Fails \
+                           if the module does not find in the video what it \
+                           should, for example because a decoder is missing."
+            .to_string(),
         "check-tag" => "Fails unless the tag is v<version>, where <version> \
                         is `version` in the root Cargo.toml."
             .to_string(),

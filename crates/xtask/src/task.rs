@@ -27,6 +27,7 @@ pub enum Task {
         list: Option<String>,
         module: Option<String>,
     },
+    CheckModule,
     CheckTag(String),
     Release {
         sha: String,
@@ -76,6 +77,7 @@ pub fn parse(args: &[String]) -> Result<Task, String> {
             list: Some(own(list)),
             module: Some(own(module)),
         }),
+        ("check-module", []) => Ok(Task::CheckModule),
         ("check-tag", [tag]) => Ok(Task::CheckTag(own(tag))),
         ("release", [sha]) => Ok(Task::Release { sha: own(sha) }),
         ("ci-download-build", [sha]) => Ok(Task::DownloadCiBuild(own(sha))),

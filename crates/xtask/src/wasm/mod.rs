@@ -13,7 +13,7 @@
 //! The decisions (command lines, checks, the build instructions) are pure
 //! functions with tests; `run` does the reading, writing and running.
 
-mod flags;
+pub(crate) mod flags;
 
 use crate::process::{self, Env};
 use crate::{checksums, io, paths, Result};
@@ -265,6 +265,18 @@ fn emsdk_env_args() -> Vec<String> {
 
 /// The environment the Emscripten tools need: nothing extra if `emcc` is on
 /// the PATH, otherwise what `$EMSDK/emsdk_env.sh` sets.
+/// The environment that has the pinned Emscripten SDK's tools.
+pub(crate) fn sdk_env() -> Result<Env> {
+    let wanted =
+        io::read_to_string(&paths::abs(paths::EMSCRIPTEN_VERSION_FILE))?;
+    emscripten_env(wanted.trim())
+}
+
+/// The configured FFmpeg source tree under `build`.
+pub(crate) fn tree_dir(build: &Path) -> std::path::PathBuf {
+    build.join(format!("ffmpeg-{}", flags::FFMPEG_VERSION))
+}
+
 fn emscripten_env(wanted: &str) -> Result<Env> {
     let works = |env: &Env| process::version_of("emcc", env).is_some();
     if works(&Env::new()) {
@@ -323,7 +335,7 @@ pub fn run() -> Result {
         return Err(message.into());
     }
 
-    let tree = build.join(format!("ffmpeg-{}", flags::FFMPEG_VERSION));
+    let tree = tree_dir(&build);
     let stored = std::fs::read_to_string(tree.join(".flags")).ok();
     if tree.is_dir() && !tree_is_current(stored.as_deref()) {
         io::remove_if_exists(&tree)?;

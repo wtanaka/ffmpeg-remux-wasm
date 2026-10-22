@@ -6,3 +6,5 @@ publish = false
 
 [dependencies]
 sha2 = "0.11.1"
+# Makes the test videos that `check-flags` reads (see check_flags.rs).
+synthvid-catalog = { git = "https://github.com/wtanaka/synthvid", rev = "a7ac0f52b86a13ae8af860a7f0cb293ce8da8788" }

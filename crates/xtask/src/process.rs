@@ -125,8 +125,13 @@ fn stdout_text(output: &Output) -> String {
 
 /// What the program printed, without the final newline; an error carrying the
 /// program's own message if it failed.
-pub fn text<S: AsRef<str>>(program: &str, args: &[S]) -> Result<String> {
-    let output = output(program, args)?;
+pub fn text_in<S: AsRef<str>>(
+    dir: &Path,
+    env: &Env,
+    program: &str,
+    args: &[S],
+) -> Result<String> {
+    let output = output_in(dir, env, program, args)?;
     if output.status.success() {
         Ok(stdout_text(&output))
     } else {
@@ -137,6 +142,11 @@ pub fn text<S: AsRef<str>>(program: &str, args: &[S]) -> Result<String> {
         )
         .into())
     }
+}
+
+/// Like `text`, in the repository root.
+pub fn text<S: AsRef<str>>(program: &str, args: &[S]) -> Result<String> {
+    text_in(&paths::root(), &Env::new(), program, args)
 }
 
 /// What the program prints for `--version`, if it is installed and works.

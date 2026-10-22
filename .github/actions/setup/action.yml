@@ -26,6 +26,11 @@ runs:
     - name: Run .ci/setup-ubuntu.sh
       shell: sh
       run: sh .ci/setup-ubuntu.sh
+    # Not in the cache (rustup keeps it elsewhere), so on every run; it does
+    # nothing once the target is there.
+    - name: Add the Rust target that check-module builds for
+      shell: sh
+      run: rustup target add wasm32-unknown-emscripten
     - name: Put the tools on the PATH
       shell: sh
       run: |

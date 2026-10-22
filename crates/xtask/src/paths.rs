@@ -45,6 +45,9 @@ pub const BUILD_DOC_TEMPLATE: &str =
 pub const BUILD_DIR: &str = concat!(ffmpeg_dir!(), "/build");
 /// The files a release holds (generated).
 pub const DIST_DIR: &str = concat!(ffmpeg_dir!(), "/dist");
+/// The program `check-module` loads the module in.
+pub const PROBE_SOURCE: &str = concat!(ffmpeg_dir!(), "/tests/probe.rs");
+pub const PROBE_SOURCE_NAME: &str = "probe.rs";
 /// The functions the module must export.
 pub const EXPORTS_LIST: &str = concat!(ffmpeg_dir!(), "/exports.txt");
 /// The built module's file name.

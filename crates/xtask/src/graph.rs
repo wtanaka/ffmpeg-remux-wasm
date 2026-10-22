@@ -12,6 +12,7 @@ pub fn name(task: &Task) -> &'static str {
         Task::Fmt { .. } => "fmt",
         Task::Clean { .. } => "clean",
         Task::CheckExports { .. } => "check-exports",
+        Task::CheckModule => "check-module",
         Task::CheckTag(_) => "check-tag",
         Task::Release { .. } => "release",
         Task::DownloadCiBuild(_) => "ci-download-build",
@@ -44,8 +45,10 @@ pub fn after(task: &Task) -> Vec<Task> {
     match task {
         // The module must export every function the list names, so a bad
         // link fails here and not in a program that loads it.
-        Task::Wasm => vec![check_exports()],
-        Task::Ci(CiPart::Build | CiPart::All) => vec![Task::Wasm, package()],
+        Task::Wasm => vec![check_exports(), Task::CheckModule],
+        Task::Ci(CiPart::Build | CiPart::All) => {
+            vec![Task::Wasm, package()]
+        }
         _ => vec![],
     }
 }
@@ -67,6 +70,7 @@ fn variants() -> Vec<Task> {
         Task::Fmt { check: false },
         Task::Clean { all: false },
         check_exports(),
+        Task::CheckModule,
         Task::CheckTag(String::new()),
         Task::Release { sha: String::new() },
         Task::DownloadCiBuild(String::new()),
@@ -95,7 +99,7 @@ mod tests {
     #[test]
     fn ci_runs_the_lint_the_module_and_the_zip() {
         assert_eq!(runs_of("ci"), ["fmt", "wasm", "package"]);
-        assert_eq!(runs_of("wasm"), ["check-exports"]);
+        assert_eq!(runs_of("wasm"), ["check-exports", "check-module"]);
         assert!(runs_of("fmt").is_empty());
     }
 

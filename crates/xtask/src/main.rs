@@ -6,6 +6,7 @@
 //! programs), so the decisions can be unit-tested.
 
 mod check_exports;
+mod check_module;
 mod checksums;
 mod ci;
 mod clean;
@@ -45,6 +46,7 @@ fn own(task: &Task) -> Result {
         Task::CheckExports { list, module } => {
             check_exports::run(list.as_deref(), module.as_deref())
         }
+        Task::CheckModule => check_module::run(),
         Task::CheckTag(tag) => release::check_tag(tag),
         Task::Release { sha } => tag::run(sha),
         Task::DownloadCiBuild(sha) => github::download_ci_build(sha),

@@ -20,7 +20,7 @@
 # change a version or SETUP_REV, to install again.
 set -eu
 
-SETUP_REV=5 # bump when this script changes what it installs
+SETUP_REV=6 # bump when this script changes what it installs
 case $0 in
   */*) HERE=${0%/*} ;;
   *) HERE=. ;;
@@ -74,6 +74,8 @@ if [ ! -x "$HOME/.cargo/bin/cargo" ] && ! command -v cargo > /dev/null; then
 fi
 # shellcheck disable=SC1091
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+# The target `cargo xtask check-module` builds its program for.
+rustup target add wasm32-unknown-emscripten
 
 echo "==> Emscripten $EMSCRIPTEN_VERSION"
 if [ ! -d "$EMSDK_DIR" ]; then
